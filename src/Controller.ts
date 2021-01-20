@@ -1,10 +1,10 @@
 export class Controller {
-  root: Element;
+  private root: Element;
   targets: Record<string, HTMLElement>;
 
   constructor(controllerName: string) {
     const root = document.querySelector(`*[data-controller]`);
-    let maybeRoot: Element | null = null;
+    let maybeRoot: Element | undefined;
 
     if (!root) {
       throw new Error(`Cannot instanciate the ${controllerName} controller. Please ensure you've entered the right data attribute`);
@@ -28,21 +28,23 @@ export class Controller {
     this.targets = {};
   }
 
-  connect() { }
-
-  _register(identifier: string) {
+  private registerActions(indentifier: string) {
     const actions = this.root.querySelectorAll('*[data-action]');
     actions.forEach((node) => {
-      if (node instanceof HTMLElement && node.dataset && node.dataset.action) {
+      if (node instanceof HTMLElement && node.dataset.action) {
         const [event, controllerAction] = node.dataset.action.split('->') as string[];
         const [controller, actionName] = controllerAction.split('#');
 
-        if (controller !== identifier) {
+        if (controller !== indentifier) {
           // Not the right controller, skip...
           return;
         }
 
         if (this && this[(actionName as any)]) {
+          // Bind the controller's action to itself.
+          // Needed since we want to preserve the functionality of `this`
+          // within the context of a controller's action, as it's indirectly
+          // being bound to an event listener.
           const cb = this[actionName].bind(this);
           node.addEventListener(event, function eventCallback(event) {
             cb(event, node);
@@ -52,10 +54,14 @@ export class Controller {
         }
       }
     });
+  }
 
+  private registerTargets(identifier: string) {
     const targets = this.root.querySelectorAll(`*[data-${identifier}-target]`);
     targets.forEach(node => {
       if (node instanceof HTMLElement) {
+        // Extract the target name from the data attribute and
+        // attempt to add it to our target mapper
         const target = node.dataset[`${identifier}Target`];
         if (target && !this.targets[target]) {
           this.targets[target] = node;
@@ -66,5 +72,12 @@ export class Controller {
         }
       }
     });
+  }
+
+  connect() { }
+
+  _register(identifier: string) {
+    this.registerActions(identifier);
+    this.registerTargets(identifier);
   }
 }

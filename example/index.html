@@ -1,7 +1,14 @@
 <html>
   <body>
-    <div data-controller="greeter">
-      <button type="button" data-action="click->greeter#sayHello">Greet</button>
+    <div data-controller="greeter i18n">
+      <select data-action="change->i18n#swapLanguages">
+        <option value="en">en</option>
+        <option value="fr">fr</option>
+      </select>
+      <input data-greeter-target="content"></input>
+      <div data-i18n-target="text" data-greeter-target="text">This is some text</div>
+      <button type="button" data-action="click->greeter#yolo" data-i18n-target="submit">Submit</button>
+      <div data-greeter-target="output"></div>
     </div>
     <script src="./index.js"></script>
   </body>
